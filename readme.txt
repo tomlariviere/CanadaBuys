@@ -1,0 +1,1 @@
+Download the app.py and contract data .csv file. Run the app.py file. Open a broswer and goto 127.0.0.1:5000. You can now search the CanadaBuys data. To update to the latest data, goto https://canadabuys.canada.ca/opendata/pub/contractHistoryComplete-contratsOctroyesComplet.csv to download the latest "All CanadaBuys contract history, 2023-06-01 onwards" csv file.
