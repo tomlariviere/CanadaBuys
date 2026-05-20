@@ -1,9 +1,13 @@
-
 from flask import Flask, request, render_template_string
 import pandas as pd
 
 # Load the CSV file
-df = pd.read_csv("contractHistoryComplete-contratsOctroyesComplet.csv", low_memory=False)
+#df = pd.read_csv("contractHistoryComplete-contratsOctroyesComplet.csv", low_memory=False)
+df1 = pd.read_csv("contractHistoryComplete-contratsOctroyesComplet.csv", low_memory=False)
+df2 = pd.read_csv("2009-2023-contractHistoryHistorical-contratsOctroyesHistorique.csv", low_memory=False)
+
+# Combine them
+df = pd.concat([df1, df2], ignore_index=True)
 
 # Columns to display in the specified order
 columns_to_display = [
@@ -24,7 +28,7 @@ column_labels = {
     "endUserEntitiesName-nomEntitesUtilisateurFinal-eng": "GOC Client",
     "contractAwardDate-dateAttributionContrat": "Contract Award Date",
     "contractEndDate-dateFinContrat": "Contract End Date",
-    "contractAmount-montantContrat": " Contract Amount",
+    "contractAmount-montantContrat": "Contract Amount",
     "totalContractValue-valeurTotaleContrat": "Contract Value",
     "gsinDescription-nibsDescription-eng": "Description"
 }
@@ -71,7 +75,10 @@ HTML_TEMPLATE = """
             {% for row in results %}
                 <tr>
                     {% for col in columns %}
-                        <td>{{ row[col] }}</td>
+                        <td style="text-align: {% if col in ['contractAmount-montantContrat', 
+                        'totalContractValue-valeurTotaleContrat'] %}right{% else %}left{% endif %};">
+                            {{ row[col] }}
+                        </td>
                     {% endfor %}
                 </tr>
             {% endfor %}
@@ -99,7 +106,13 @@ def search():
             # Apply sorting if selected
             if sort_by in columns_to_display:
                 filtered = filtered.sort_values(by=sort_by, ascending=(order == 'asc'))
-            results = filtered[columns_to_display].to_dict(orient='records')
+            # Apply formatting for dollar values
+            for col in ["contractAmount-montantContrat", "totalContractValue-valeurTotaleContrat"]:
+                filtered[col] = pd.to_numeric(filtered[col], errors='coerce')  # ensure numeric
+                filtered[col] = filtered[col].apply(lambda x: f"${x:,.2f}" if pd.notna(x) else "")
+
+            results = filtered[columns_to_display].to_dict(orient='records')    
+            #results = filtered[columns_to_display].to_dict(orient='records')
     return render_template_string(HTML_TEMPLATE, results=results, columns=columns_to_display,
                                   column_labels=column_labels, searched=searched, search_term=search_term)
 
